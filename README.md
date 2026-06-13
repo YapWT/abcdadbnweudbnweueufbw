@@ -2556,7 +2556,7 @@ ORDER BY → Sort result
 This flow is one of the most frequently tested SQL concepts in exams.
 
 ---
-## Chap 4
+# Chap 4
 
 Joins
 
