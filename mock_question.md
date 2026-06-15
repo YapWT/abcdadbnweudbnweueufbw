@@ -492,27 +492,23 @@ Store CustomerName directly in the Orders table to avoid frequent joins with Cus
 ## Answer:
 
 ```sql
-DELIMITER $$
-
-CREATE PROCEDURE CountPendingPayments(
-    IN p_ContactPerson VARCHAR(100)
-)
+CREATE PROCEDURE dbo.CountPendingPayments
+    @ContactPerson NVARCHAR(100)
+AS
 BEGIN
     SELECT COUNT(*) AS PendingPaymentCount
     FROM Customers C
-    JOIN Payments P
+    INNER JOIN Payments P
         ON C.CustomerID = P.CustomerID
-    WHERE C.ContactPerson = p_ContactPerson
+    WHERE C.ContactPerson = @ContactPerson
       AND P.Status = 'Pending';
-END$$
-
-DELIMITER ;
+END;
 ```
 
 ### Example Execution
 
 ```sql
-CALL CountPendingPayments('Ravi Kumar');
+EXEC dbo.CountPendingPayments @ContactPerson = 'Ravi Kumar';
 ```
 
 ### Expected Result
@@ -528,19 +524,19 @@ CALL CountPendingPayments('Ravi Kumar');
 ## Answer:
 
 ```sql
-DELIMITER $$
-
-CREATE TRIGGER PreventPaymentDelete
-BEFORE DELETE
+CREATE TRIGGER dbo.PreventPaymentDelete
 ON Payments
-FOR EACH ROW
+INSTEAD OF DELETE
+AS
 BEGIN
-    SIGNAL SQLSTATE '45000'
-    SET MESSAGE_TEXT =
-    'Deletion is not allowed. Change payment status to CANCELLED instead.';
-END$$
+    SET NOCOUNT ON;
 
-DELIMITER ;
+    UPDATE P
+    SET P.Status = 'CANCELLED'
+    FROM Payments P
+    INNER JOIN deleted d
+        ON P.PaymentID = d.PaymentID;
+END;
 ```
 
 ### To cancel a payment instead of deleting it:
